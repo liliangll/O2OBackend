@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.ChannelShopMapper">
+
+    <!--<cache type="cn.com.efuture.o2o.backend.config.RedisCacheConfig" />-->
+
+    <!-- 获取店铺列表清单-->
+    <select id="getChannelShopList" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelShop">
+        select a.channelId,a.channelShopId,a.channelShopName,a.shopId,a.status,a.stockRate,a.preOrder,a.isOpen,a.openTime,a.address,a.contactTel,a.serviceTel,a.notice,a.lastModifyTime,a.syncGoodsTime,a.syncGoodsNote,a.syncStatus
+        ,b.channelName,c.regionId,c.city,c.ShopName,c.ShopNameAlias,d.regionName
+        from channelshop a join channel b on a.channelId = b.channelId
+        join shop c on a.shopId = c.shopId
+        join region d on c.regionId =d.regionId
+        <where>
+            <if test="channelId !=null and channelId !='' ">
+                a.channelId = #{channelId}
+            </if>
+            <if test="preOrder !=null">
+                and a.preOrder = #{preOrder}
+            </if>
+            <if test="isOpen !=null and isOpen !='' ">
+                and a.isOpen = #{isOpen}
+            </if>
+            <if test="regionId !=null and regionId !='' ">
+                and c.regionId = #{regionId}
+            </if>
+            <if test="city !=null and city !='' ">
+                and c.city = #{city}
+            </if>
+            <if test="channelShopName !=null and channelShopName !=''">
+               and a.channelShopName like concat('%',#{channelShopName},'%')
+            </if>
+            <if test="shopId != null">
+                and a.shopId in
+                <foreach collection="shopId" open="(" close=")" separator="," item="shopId" index="index">
+                    #{shopId}
+                </foreach>
+            </if>
+            <if test="userName != null">
+                and a.shopId in (select shopId from o2o_user_shop where userName = #{userName})
+            </if>
+        </where>
+    </select>
+
+    <!-- 获取店铺信息-->
+    <select id="getChannelShop" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelShop">
+        select channelId, channelShopId, channelShopName, shopId, status, stockRate,preOrder, isOpen, openTime, address, contactTel, serviceTel, notice, lastModifyTime, syncGoodsTime, syncGoodsNote, syncStatus
+        from channelShop where channelShopId=#{channelShopId} and channelId =#{channelId}
+    </select>
+
+    <!-- 新增店铺 -->
+    <insert id="insertChannelShop" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelShop">
+        INSERT INTO channelShop (channelId, channelShopId, channelShopName, shopId, status, stockRate, isOpen, openTime, address, contactTel, serviceTel, notice)
+        VALUES (#{channelId},#{channelShopId},#{ channelShopName},#{shopId},#{status},#{stockRate},#{isOpen},#{openTime},#{address},#{contactTel},#{serviceTel},#{notice})
+    </insert>
+
+    <!-- 修改店铺信息 -->
+    <update id="updateChannelShop" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelShop">
+        update channelShop set
+        <if test="address !=null">
+            address = #{address},
+        </if>
+        <if test="contactTel !=null">
+            contactTel = #{contactTel},
+        </if>
+        <if test="serviceTel !=null">
+            serviceTel = #{serviceTel},
+        </if>
+        <if test="notice !=null">
+            notice = #{notice},
+        </if>
+        <if test="preOrder != null">
+            preOrder = #{preOrder},
+        </if>
+        <if test="isOpen !=null">
+            isOpen = #{isOpen},
+        </if>
+        lastModifyTime = now()
+        where channelId=#{channelId} and channelShopId=#{channelShopId}
+    </update>
+
+    <!-- 获取店铺营业时间清单 -->
+    <select id="getChannelShopTime" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelShopTime">
+        select startDate, endDate, channelId, channelShopId, openTime, createTime from channelShopTime where channelShopId=#{channelShopId} and channelId =#{channelId} order by startDate
+    </select>
+
+    <!--修改店铺营业时间 -->
+    <update id="updateChannelShopTime" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelShopTime">
+        replace into channelShopTime (startDate,endDate,openTime,createTime,channelId,channelShopId)
+        values (#{startDate},#{endDate},#{openTime},now(),#{channelId},#{channelShopId})
+    </update>
+
+
+    <!-- 写入店铺操作日志表 -->
+    <insert id="insertChannelShopLog" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelShopLog">
+        insert into channelShopLog (operator,channelId,channelShopId,shopId,taskType,isOpen,notice,openTime,createTime)
+        values (#{operator},#{channelId}, #{channelShopId},#{shopId},#{taskType},#{isOpen},#{notice},#{openTime}, now())
+    </insert>
+</mapper>
+
+
+

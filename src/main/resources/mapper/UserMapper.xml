@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.UserMapper">
+
+    <resultMap id="userMap" type="cn.com.efuture.o2o.backend.mybatis.entity.User">
+        <id property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="password" column="password"/>
+        <result property="regist_time" column="regist_time"/>
+        <result property="last_act_ip" column="last_act_ip"/>
+        <result property="last_act_time" column="last_act_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <!--<cache type="cn.com.efuture.o2o.backend.config.RedisCacheConfig" />-->
+
+    <select id="getRoleModuleListByUserId" parameterType="int" resultType="Map">
+        SELECT
+            a.userId,
+            a.userName,
+            c.moduleId,
+            c.sign
+        FROM
+            USER a
+            JOIN o2o_user_role b ON a.userId = b.userId
+            join o2o_role_module c on b.roleId = c.roleId
+        WHERE
+            a.userId = #{userId}
+        order by c.moduleId
+    </select>
+
+
+    <select id="getMenu" parameterType="Map" resultType="Map">
+        SELECT DISTINCT
+            a.menuId,
+            a.menuName,
+            a.headMenuId,
+            a.class,
+            a.moduleId,
+            b.moduleName,
+            IF(b.url IS NULL, 0, 1) isModule,
+            IFNULL(b.url, a.uim)    url
+        FROM
+            o2o_menu a
+            LEFT JOIN o2o_module b ON a.moduleId = b.moduleId and b.enable=1
+        WHERE b.url IS NULL
+              OR (
+                  EXISTS(
+                          SELECT 1
+                          FROM
+                              USER b
+                              JOIN o2o_user_role c ON c.userId = b.userId
+                              JOIN o2o_role_module d ON d.roleId = c.roleId
+                          WHERE
+                              b.userName = #{userName}
+                              AND d.moduleid = b.moduleId
+                  ))
+        ORDER BY
+            a.class,
+            a.headMenuId,
+            a.menuId
+    </select>
+
+    <select id="getUserById" parameterType="Int" resultType="cn.com.efuture.o2o.backend.mybatis.entity.User">
+        SELECT
+            userId,
+            userName,
+            password,
+            regist_time,
+            last_act_ip,
+            last_act_time
+        FROM user
+        WHERE userId = #{userId}
+    </select>
+
+    <select id="getUserByMail" parameterType="String" resultType="cn.com.efuture.o2o.backend.mybatis.entity.User">
+        SELECT
+            userId,
+            userName,
+            password,
+            regist_time,
+            last_act_ip,
+            last_act_time,
+            status
+        FROM user
+        WHERE userName = #{userName}
+    </select>
+
+    <select id="getUserByName" parameterType="String" resultType="cn.com.efuture.o2o.backend.mybatis.entity.User">
+        SELECT
+            userId,
+            userName,
+            regist_time,
+            last_act_ip,
+            last_act_time,
+            status
+        FROM user
+        WHERE userName = #{userName}
+    </select>
+
+    <select id="getUserByNameAndPassword" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.User"
+            resultType="cn.com.efuture.o2o.backend.mybatis.entity.User">
+        SELECT
+            userId,
+            userName,
+            password,
+            regist_time,
+            last_act_ip,
+            last_act_time,
+            status
+        FROM user
+        WHERE userName = #{userName} AND password = #{password}
+    </select>
+
+    <insert id="registerUser" parameterType="User" keyProperty="userId" flushCache="true">
+        INSERT INTO user (userName, password, regist_time, last_act_ip, last_act_time, status)
+        VALUES (#{userName}, #{password}, #{regist_time}, #{last_act_ip}, #{last_act_time}, #{status})
+    </insert>
+
+    <!--获取所有用户列表-->
+    <select id="getUserList" resultType="cn.com.efuture.o2o.backend.mybatis.entity.User">
+        select userId,userName,email,phone,regist_time, last_act_ip, last_act_time, status from user
+        <where>
+            <if test="userId !=null">
+                userId=#{userId}
+            </if>
+            <if test="userName != null and userName !=''">
+                and userName like concat('%',#{userName},'%')
+            </if>
+        </where>
+    </select>
+
+    <!--查询用户和门店的对应关系 -->
+    <select id="getUserShops" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.UserShop">
+        SELECT
+            a.userId,
+            b.shopId,
+            b.shopName,
+            b.shopNameAlias,
+            b.city
+        FROM o2o_user_shop a
+            JOIN shop b ON a.shopId = b.shopId
+            JOIN o2o_user_retailformat c on c.userId = a.userId and c.retailformatId = b.retailformatId
+        WHERE b.city IS NOT NULL AND a.userId = #{userId}
+        ORDER BY b.city
+    </select>
+
+    <!--删除用户和门店的对应关系 -->
+    <delete id="deleteUserShop" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.UserShop">
+        DELETE FROM o2o_user_shop
+        WHERE userId = #{userId}
+    </delete>
+
+    <delete id="deleteUserShopById">
+        DELETE FROM o2o_user_shop
+        WHERE userId = #{userId}
+              and shopId in (SELECT shopId
+                             FROM shop
+                             where retailformatId = #{retailFormatId})
+    </delete>
+
+
+    <!--插入用户和门店的对应关系 -->
+    <insert id="insertUserShop" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.UserShop">
+        INSERT INTO o2o_user_shop (userId, userName, shopId) VALUES (#{userId}, #{userName}, #{shopId})
+    </insert>
+    <insert id="insertUserShops" parameterType="Map">
+        INSERT INTO o2o_user_shop (userId, userName, shopId) VALUES
+        <foreach collection="shopList" separator="," item="shopId" index="index">
+            (#{userId}, #{userName}, #{shopId})
+        </foreach>
+    </insert>
+
+    <!--新增用户业态-->
+    <insert id="addUserRetailFormat" parameterType="Map">
+        insert into o2o_user_retailformat (userId, retailformatId) values (#{userId}, #{retailFormatId})
+    </insert>
+
+    <!--删除用户业态-->
+    <delete id="deleteUserRetailFormat" parameterType="Map">
+        DELETE FROM o2o_user_retailformat
+        WHERE userId = #{userId}
+        <if test="retailFormatId !=null">
+            and retailformatId = #{retailFormatId}
+        </if>
+    </delete>
+
+    <!--查询用户和角色的对应关系-->
+    <select id="getUserRoles" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.UserRole">
+        SELECT
+            userId,
+            roleId
+        FROM o2o_user_role
+        WHERE userId = #{userId}
+    </select>
+
+    <!--删除用户和角色的对应关系 -->
+    <delete id="deleteUserRole" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.UserRole">
+        DELETE FROM o2o_user_role
+        WHERE userId = #{userId}
+    </delete>
+    <!--插入用户和角色的对应关系 -->
+    <insert id="insertUserRole" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.UserRole">
+        INSERT INTO o2o_user_role (userId, roleId) VALUES (#{userId}, #{roleId})
+    </insert>
+
+    <!--验证用户名是否重复-->
+    <select id="checkUser" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.User">
+        SELECT userName
+        FROM user
+        WHERE userName = #{userName}
+    </select>
+
+    <!--新增用户-->
+    <insert id="insertUser" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.User" keyProperty="userId"
+            flushCache="true">
+        INSERT INTO user (userName, password, email, phone, regist_time, last_act_ip, last_act_time, status)
+        VALUES (#{userName}, #{password}, #{email}, #{phone}, now(), #{last_act_ip}, now(), #{status})
+    </insert>
+
+    <!--修改用户信息-->
+    <update id="updateUser" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.User" keyProperty="userId"
+            flushCache="true">
+        update user SET
+        <if test="password !=null and password !='' ">
+            password = #{password},
+        </if>
+        <if test="email !=null and email !='' ">
+            email = #{email},
+        </if>
+        <if test="phone !=null and phone !='' ">
+            phone = #{phone},
+        </if>
+        <if test="status !=null and status != ''">
+            status =#{status},
+        </if>
+        <if test="last_act_ip !=null  and last_act_ip !='' ">
+            last_act_ip = #{last_act_ip},
+        </if>
+        last_act_time =now()
+        where userId =#{userId}
+    </update>
+</mapper>
+
+
+

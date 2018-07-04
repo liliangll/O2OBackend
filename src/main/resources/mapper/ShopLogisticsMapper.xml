@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.ShopLogisticsMapper">
+
+      <!-- 获取 shopLogistics 列表清单-->
+    <select id="getShopLogisticsList" resultType="cn.com.efuture.o2o.backend.mybatis.entity.ShopLogistics">
+        select shopId,logisticsType,firstWeight,firstFee,nextFee,limitWeight,freeShippingId,logisticsTimeId,isToday,usedTime,choseDays,gid from zt_shoplogistics
+    </select>
+</mapper>
+
+
+

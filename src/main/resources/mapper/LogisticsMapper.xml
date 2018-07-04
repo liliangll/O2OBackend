@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.LogisticsMapper">
+
+      <!-- 获取 物流类型 列表清单-->
+    <select id="getLogisticsTypeList" resultType="cn.com.efuture.o2o.backend.mybatis.entity.LogisticsType">
+        select logisticsType,logisticsName,isfresh,district from zt_logisticstype
+    </select>
+
+    <select id="getLogisticsTimeList" parameterType="String" resultType="cn.com.efuture.o2o.backend.mybatis.entity.LogisticsTime">
+        select logisticsTimeId,logisticsTimeName,logisticsType,timeStart,timeEnd,fee from zt_logisticstime where logisticsType =#{logisticsType}
+    </select>
+
+    <select id="getLogisticsFreeShippingList" parameterType="String" resultType="cn.com.efuture.o2o.backend.mybatis.entity.LogisticsFreeShipping">
+        select  freeShippingId,freeShippingName,logisticsType,amount,amountMax,weight from zt_logisticsfreeshipping where logisticsType =#{logisticsType}
+    </select>
+</mapper>
+
+
+

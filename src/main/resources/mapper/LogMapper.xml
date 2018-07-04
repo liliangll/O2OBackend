@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.LogMapper">
+
+    <select id="getChannelCategoryLog" parameterType="Map" resultType="Map">
+        SELECT logId,operator,shopId,channelId,channelShopId,case taskType when 1 then '新增' when 2 then '修改' when 3 then '禁用' when 4 then '修改排序' end as 'taskType',createTime,categoryId,categoryName,processTime,processCount,case processStatus when 0 then '待处理' when 100 then '完成' when 99 then '异常' end as 'processStatus',processMsg
+		from channelcategorylog
+		where 1=1
+		<if test="shopId !=null and shopId !='' ">
+           and shopId = #{shopId}
+        </if>
+        <if test="operator !=null and operator !='' ">
+           and operator = #{operator}
+        </if>
+        <if test="channelId !=null and channelId !='' ">
+           and channelId = #{channelId}
+        </if>
+        <if test="channelShopId !=null and channelShopId !='' ">
+           and channelShopId = #{channelShopId}
+        </if>
+        <if test="categoryId !=null and categoryId !='' ">
+           and categoryId = #{categoryId}
+        </if>
+        <if test="taskType !=null and taskType !=''">
+           and taskType = #{taskType}
+        </if>
+        <if test="processStatus !=null and processStatus !=''">
+           and processStatus = #{processStatus}
+        </if>
+        <if test="startDate !=null and startDate !='' and endDate !=null and endDate !=''">
+           and  createTime between #{startDate} and DATE_ADD(#{endDate},INTERVAL 1 DAY)
+        </if>
+        <if test="userName != null">
+                and shopId in (select shopId from o2o_user_shop where userName = #{userName})
+        </if>
+		order by logId desc
+        <if test="start != null and pagesize != null and total == null">
+			limit #{start},#{pagesize}
+		    </if>
+    </select>
+    
+    <select id="getChannelShopLog" parameterType="Map" resultType="Map">
+        SELECT logId,operator,shopId,channelId,channelShopId,case taskType when 1 then '营业状态修改' when 2 then '营业时间修改' when 3 then '店铺公告修改' when 4 then '店铺信息修改' end as 'taskType',isOpen,notice,openTime,createTime,processTime,processCount,case processStatus when 0 then '待处理' when 100 then '完成' when 99 then '异常' end as 'processStatus',processMsg
+		from channelShopLog 
+		where 1=1
+		<if test="shopId !=null and shopId !='' ">
+           and shopId = #{shopId}
+        </if>
+        <if test="operator !=null and operator !='' ">
+           and operator = #{operator}
+        </if>
+        <if test="channelId !=null and channelId !='' ">
+           and channelId = #{channelId}
+        </if>
+        <if test="channelShopId !=null and channelShopId !='' ">
+           and channelShopId = #{channelShopId}
+        </if>
+        <if test="taskType !=null and taskType !='' ">
+           and taskType = #{taskType}
+        </if>
+        <if test="processStatus !=null and processStatus !='' ">
+           and processStatus = #{processStatus}
+        </if>
+        <if test="startDate !=null and startDate !='' and endDate !=null and endDate !=''">
+           and  createTime between #{startDate} and DATE_ADD(#{endDate},INTERVAL 1 DAY)
+        </if>
+        <if test="userName != null">
+                and shopId in (select shopId from o2o_user_shop where userName = #{userName})
+        </if>
+		  ORDER BY logId DESC
+        <if test="start != null and pagesize != null and total == null">
+			limit #{start},#{pagesize}
+		    </if>
+    </select>
+    
+    <select id="getO2oGoodsLog" parameterType="Map" resultType="Map">
+        SELECT logId,operator,shopId,channelId,channelShopId,case taskType when 1 then '发布' when 2 then '修改' when 3 then '禁用' when 4 then '价格' when 5 then '上下架' end as 'taskType',
+        itemId,skuId,itemCode,o2oItemId,o2oSkuID,shelved,price,createTime,isUpdateImage,processTime,processCount,
+        case processStatus when 0 then '待处理' when 100 then '完成' when 99 then '异常' end as 'processStatus',processMsg,batchId
+		from O2oGoodsLog 
+		where 1=1
+		<if test="batchId !=null and batchId !='' ">
+           and batchId = #{batchId}
+        </if>
+		<if test="shopId !=null and shopId !='' ">
+           and shopId = #{shopId}
+        </if>
+        <if test="operator !=null and operator !='' ">
+           and operator = #{operator}
+        </if>
+        <if test="channelId !=null and channelId !='' ">
+           and channelId = #{channelId}
+        </if>
+        <if test="channelShopId !=null and channelShopId !='' ">
+           and channelShopId = #{channelShopId}
+        </if>
+        <if test="itemId !=null and itemId !='' ">
+           and itemId = #{itemId}
+        </if>
+        <if test="itemCode !=null and itemCode !='' ">
+           and itemCode = #{itemCode}
+        </if>
+        <if test="taskType !=null and taskType !=''">
+           and taskType = #{taskType}
+        </if>
+        <if test="processStatus !=null and processStatus !=''">
+           and processStatus = #{processStatus}
+        </if>
+        <if test="startDate !=null and startDate !='' and endDate !=null and endDate !=''">
+           and  createTime between #{startDate} and DATE_ADD(#{endDate},INTERVAL 1 DAY)
+        </if>
+        <if test="userName != null">
+           and shopId in (select shopId from o2o_user_shop where userName = #{userName})
+        </if>
+            ORDER BY logId DESC
+        <if test="start != null and pagesize != null and total == null">
+			limit #{start},#{pagesize}
+		</if>
+    </select>
+
+    <select id="getO2oInventoryLog" parameterType="Map" resultType="Map">
+        SELECT logId,operator,shopId,channelId,channelShopId,itemId,skuId,itemCode,o2oItemId,o2oSkuID,p4Stock,saleQty,createTime,actualStock,processTime,
+        processCount,case processStatus when 0 then '待处理' when 100 then '完成' when 99 then '异常' end as 'processStatus',processMsg,batchId
+		from o2oinventorylog 
+		where 1=1
+		<if test="batchId !=null and batchId !='' ">
+           and batchId = #{batchId}
+        </if>
+		<if test="shopId !=null and shopId !='' ">
+           and shopId = #{shopId}
+        </if>
+        <if test="operator !=null and operator !='' ">
+           and operator = #{operator}
+        </if>
+        <if test="channelId !=null and channelId !='' ">
+           and channelId = #{channelId}
+        </if>
+        <if test="channelShopId !=null and channelShopId !='' ">
+           and channelShopId = #{channelShopId}
+        </if>
+        <if test="itemId !=null and itemId !='' ">
+           and itemId = #{itemId}
+        </if>
+        <if test="itemCode !=null and itemCode !='' ">
+           and itemCode = #{itemCode}
+        </if>
+        <if test="processStatus !=null and processStatus !=''">
+           and processStatus = #{processStatus}
+        </if>
+        <if test="startDate !=null and startDate !='' and endDate !=null and endDate !=''">
+           and  createTime between #{startDate} and DATE_ADD(#{endDate},INTERVAL 1 DAY)
+        </if>
+        <if test="userName != null">
+           and shopId in (select shopId from o2o_user_shop where userName = #{userName})
+        </if>
+         ORDER BY logId DESC
+        <if test="start != null and pagesize != null and total == null">
+			limit #{start},#{pagesize}
+		</if>
+    </select>
+</mapper>
+
+
+

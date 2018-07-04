@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.ShopMapper">
+
+    <!--<cache type="cn.com.efuture.o2o.backend.config.RedisCacheConfig" />-->
+
+    <!-- 获取 shop 列表清单-->
+    <select id="getShopList" resultType="cn.com.efuture.o2o.backend.mybatis.entity.Shop">
+        select
+        a.shopId,a.shopName,a.shopType,a.regionId,a.posIp,a.tpUserName,a.tpPassWord,a.shopNameAlias,a.pickupLongTime,a.sendLongTime,a.shopPrintUrl,a.stockLastTime,a.sendLongTimeBBT,a.nodal_point,a.phone,a.region,a.address,a.service_tel,a.logistics_name,a.home_url,a.isoverseas,a.city,a.province,a.zip,a.onlyO2O
+        from shop a
+        where city is not null
+        <if test="city != null  and city != '' ">
+            and city = #{city}
+        </if>
+        <if test="userName != null">
+            and shopId in (select shopId from o2o_user_shop where userName = #{userName})
+        </if>
+        <if test="retailFormatId !=null">
+            and a.retailformatId in
+            <foreach collection="retailFormatId" open="(" close=")" separator="," item="retailFormatId"
+                     index="index">
+                #{retailFormatId}
+            </foreach>
+        </if>
+        <if test="channelId !=null and channelId !='' ">
+            and not exists (select 1 from channelshop where channelId = #{channelId} and shopId =a.shopId)
+        </if>
+        order by city,shopId
+    </select>
+
+
+    <select id="getCityList" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.Shop">
+        select DISTINCT city from shop where city is not null
+        <if test="userName != null">
+            and shopId in (select shopId from o2o_user_shop where userName = #{userName})
+        </if>
+    </select>
+
+    <select id="getShopByShopId" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.Shop">
+        select
+        a.shopId,a.shopName,a.shopType,a.regionId,a.posIp,a.tpUserName,a.tpPassWord,a.shopNameAlias,a.pickupLongTime,a.sendLongTime,a.shopPrintUrl,a.stockLastTime,a.sendLongTimeBBT,a.nodal_point,a.phone,a.region,a.address,a.service_tel,a.logistics_name,a.home_url,a.isoverseas,a.city,a.province,a.zip,a.onlyO2O
+        from shop a
+        <where>
+            <if test="shopId !=null and shopId !='' ">
+                a.shopId = #{shopId}
+            </if>
+        </where>
+    </select>
+
+</mapper>
+
+
+

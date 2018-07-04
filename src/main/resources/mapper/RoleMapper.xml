@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.RoleMapper">
+
+    <resultMap id="RoleMap" type="cn.com.efuture.o2o.backend.mybatis.entity.Role">
+        <id property="roleId" column="roleId"/>
+        <result property="roleName" column="roleName"/>
+        <result property="enable" column="enable"/>
+    </resultMap>
+
+    <insert id="addRole" parameterType="Map">
+        INSERT INTO o2o_role (roleName, enable) VALUES (#{roleName}, #{enable})
+    </insert>
+
+    <select id="getRoleList" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.Role">
+        SELECT roleId,roleName,enable FROM o2o_role
+        <where>
+            <if test="roleName != null and roleName!='' ">
+                roleName like '%#{roleName}%'
+            </if>
+        </where>
+
+    </select>
+
+    <update id="updateRole" parameterType="Map">
+        update o2o_role set
+        <if test="roleName !=null and roleName!='' ">
+            roleName=#{roleName},
+        </if>
+        <if test="enable != null and enable!='' ">
+            enable=#{enable}
+        </if>
+        where roleId=#{roleId}
+    </update>
+
+    <select id="getRoleModule" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.RoleModule">
+        SELECT
+            roleId,
+            moduleId,
+            sign
+        FROM o2o_role_module a
+        WHERE a.roleId = #{roleId}
+    </select>
+
+    <select id="getModule" parameterType="Map" resultType="Module">
+        SELECT moduleId,moduleName,enable,note,url,sign
+        <if test="moduleId != null">
+            ,messages
+        </if>
+        FROM o2o_module
+        <where>
+            <if test="moduleName != null and moduleName !='' ">
+                moduleName like '%${moduleName}%'
+            </if>
+            <if test="moduleId != null">
+                and moduleId = #{moduleId}
+            </if>
+        </where>
+
+    </select>
+
+    <delete id="deleteRoleModule" parameterType="Map">
+        DELETE FROM o2o_role_module
+        WHERE roleId = #{roleId}
+    </delete>
+
+    <insert id="addRoleModule" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.RoleModule">
+        INSERT INTO o2o_role_module VALUES (#{roleId}, #{moduleId}, #{sign})
+    </insert>
+
+    <update id="saveModuleMessage" parameterType="Map">
+        UPDATE o2o_module
+        SET messages = #{messages}
+        WHERE moduleId = #{moduleId}
+    </update>
+
+    <select id="checkRoleName" parameterType="Map" resultType="int">
+        select count(1) from o2o_role where roleName=#{roleName}
+        <if test="roleId !=null and roleId !=''">
+            and roleId !=#{roleId}
+        </if>
+    </select>
+
+</mapper>
+
+
+

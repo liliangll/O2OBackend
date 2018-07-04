@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.O2oGoodsLockPriceLogMapper">
+
+    <select id="getO2oGoodsLockPriceListCount" parameterType="Map" resultType="long">
+        select count(1) FROM o2ogoodslockpricelog a
+        left join o2ogoods b on a.skuId=b.skuId and a.channelId=b.channelId
+        left join shop c on a.shopId=c.ShopId
+        <if test="userName != null">
+            join o2o_user_shop e on e.shopId=c.shopId and e.userName = #{userName}
+        </if>
+        where a.flag=1
+        <if test="itemCode != null">
+            and a.itemCode = #{itemCode}
+        </if>
+        <if test="goodsName !=null and goodsName !=''">
+            and  b.goodsName like concat('%',#{goodsName},'%')
+        </if>
+    </select>
+
+    <select id="getO2oGoodsLockPriceList" parameterType="Map"  resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoodsLockPrice">
+        select a.skuId,a.channelId,a.startTime,a.shopId,a.lockPrice,a.flag,a.endTime,a.createTime,a.operator,b.itemCode,b.goodsName,c.ShopNameAlias shopName,d.channelName
+        from o2ogoodslockpricelog a
+        left join o2ogoods b on a.skuId=b.skuId and a.channelId=b.channelId
+        left join shop c on a.shopId=c.ShopId
+        left join channel d on a.channelId=d.channelId
+        <if test="userName != null">
+            join o2o_user_shop e on e.shopId=c.shopId and e.userName = #{userName}
+        </if>
+        where a.flag=1
+            <if test="itemCode != null">
+               and a.itemCode = #{itemCode}
+            </if>
+            <if test="goodsName !=null and goodsName !=''">
+              and  b.goodsName like concat('%',#{goodsName},'%')
+            </if>
+        group by a.itemCode
+        <if test="page != null">
+            limit #{page},#{pageSize}
+        </if>
+    </select>
+
+
+    <select id="getO2oGoodsLockPriceByItemCode" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoodsLockPrice">
+        select a.lockPrice, a.startTime,a.endTime,a.flag from o2ogoodslockpricelog a where a.itemCode=#{itemCode} order by startTime
+    </select>
+
+</mapper>
+
+
+

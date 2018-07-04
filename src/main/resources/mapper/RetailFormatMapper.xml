@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.RetailFormatMapper">
+
+    <select id="getRetailFormatList" resultType="cn.com.efuture.o2o.backend.mybatis.entity.RetailFormat">
+        select
+            retailformatId,
+            retailformatName
+        from retailformat
+    </select>
+
+
+    <select id="getRetailFormatListByUserId" parameterType="Map"
+            resultType="cn.com.efuture.o2o.backend.mybatis.entity.RetailFormat">
+        select
+            a.retailformatId,
+            retailformatName
+        from retailformat a
+            join o2o_user_retailformat b on a.retailformatId = b.retailformatId
+        where b.userId = #{userId}
+    </select>
+
+
+    <select id="getRetailFormatListByUserName" parameterType="Map"
+            resultType="cn.com.efuture.o2o.backend.mybatis.entity.RetailFormat">
+        select
+            a.retailformatId,
+            retailformatName
+        from retailformat a
+            join o2o_user_retailformat b on a.retailformatId = b.retailformatId
+            join user c on b.userId = c.userId
+        where c.userName = #{userName}
+    </select>
+
+</mapper>
+
+
+

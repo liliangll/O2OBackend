@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.O2oGoodsFilterMapper">
+   
+   <select id="getO2oGoodsFilterSheetHead" parameterType="Map" resultType="Map">
+        select sheetId, case flag when 0 then '新建' when 10 then '提报' when 100 then '生效' end as 'flag', note, auditNote, createTime, creator, auditTime
+        from o2ogoodsfilter_sheet_head  
+        <where>
+            <if test="sheetId != null and sheetId !='' ">
+                sheetId=#{sheetId}
+            </if>
+            <if test="flag != null">
+                and flag in
+                <foreach collection="flag" open="(" close=")" separator="," item="flag" index="index">
+                    #{flag}
+                </foreach>
+            </if>
+            <if test="startDate !=null and startDate !='' and endDate !=null and endDate !='' ">
+                and  createTime between #{startDate} and DATE_ADD(#{endDate},INTERVAL 1 DAY)
+            </if>
+            <if test="creator != null and creator !='' ">
+                and creator=#{creator}
+            </if>
+        </where>
+            order by createTime desc
+        <if test="start != null and pagesize != null">
+            limit #{start},#{pagesize}
+        </if>
+    </select>
+    
+    
+    <select id="getO2oGoodsFilterSheetDetail" parameterType="Map" resultType="Map">
+        select a.sheetId, a.rowNo, a.shopId, a.itemCode, a.goodsName, case a.status when 0 then '拒绝' when 1 then '通过' end as 'status', a.statusMsg, b.shopNameAlias, if(c.goodsName is null,0,1) isHave, a.barcode, IFNULL(a.price,"") price, c.imageKey1 
+        from o2ogoodsfilter_sheet_detail a
+        left join shop b on a.shopId=b.shopId
+        left join o2o_product c on a.itemCode=c.itemCode and b.retailFormatId = c.retailFormatId
+        <where>
+            <if test="sheetId != null and sheetId !='' ">
+                a.sheetId=#{sheetId}
+            </if>
+            <if test="shopId != null and shopId !='' ">
+                and a.shopId=#{shopId}
+            </if>
+            <if test="itemCode != null and itemCode !='' ">
+                and a.itemCode=#{itemCode}
+            </if>
+            <if test="goodsName != null and goodsName !='' ">
+                and a.goodsName=#{goodsName}
+            </if>
+            <if test="status != null ">
+                and a.status=#{status}
+            </if>
+            <if test="userName != null">
+                and a.shopId in (select shopId from o2o_user_shop where userName = #{userName})
+            </if>
+        </where>
+        <if test="start != null and pagesize != null">
+            limit #{start},#{pagesize}
+        </if>
+    </select>
+   
+    <select id="getSheetGoodsNameById" parameterType="String" resultType="Map">
+        select a.itemCode,ifnull(b.goodsname,a.goodsName) goodsName,b.barcode,b.imageKey1 
+        from cs_product a 
+        left o2o_product b on b.itemcode=a.itemcode 
+        where a.itemCode = #{itemCode} limit 1
+    </select>
+    
+    
+    <select id="getSheetRowNoMax" parameterType="String" resultType="Integer">
+        select IFNULL(max(rowNo),0) from o2ogoodsfilter_sheet_detail where sheetId = #{sheetId}
+    </select>
+    
+    <select id="getShopIdByName" parameterType="String" resultType="String">
+        select shopId from o2o_user_shop where userName = #{userName}
+    </select>
+    
+    <insert id="insertO2oGoodsFilterSheetHead" parameterType="Map">
+        REPLACE INTO o2ogoodsfilter_sheet_head (sheetId, flag, note, auditNote, createTime, creator)
+        VALUES (#{sheetId}, 0, #{note}, #{auditNote}, now(), #{creator})
+    </insert>
+    
+    
+    <insert id="insertO2oGoodsFilterSheetDetail" parameterType="Map">
+        REPLACE INTO o2ogoodsfilter_sheet_detail (sheetId, rowNo, shopId, itemCode, goodsName, status, statusMsg, barcode, price)
+        VALUES (#{sheetId}, #{rowNo}, #{shopId}, #{itemCode}, #{goodsName}, #{status}, #{statusMsg}, #{barcode}, #{price})
+    </insert>
+     
+    <insert id="importO2oGoodsFilterSheetDetail"  parameterType="Map">
+	    REPLACE into o2ogoodsfilter_sheet_detail(sheetId,rowNo,shopId,itemCode,goodsName,status,statusMsg)
+	    values  
+	    <foreach collection="list" item="item" index="index" separator="," >
+	        (#{item.sheetId},#{item.rowNo},#{item.shopId},#{item.itemCode},#{item.goodsName},#{item.status},#{item.statusMsg})
+	    </foreach>  
+	</insert>
+    
+    
+    <update id="updateO2oGoodsFilterSheetHead" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoodsFilterSheetHead">
+        update o2ogoodsfilter_sheet_head set 
+        <if test="flag !=null ">
+            flag = #{flag},
+        </if>
+        <if test="note !=null and note !='' ">
+            note = #{note},
+        </if>
+        <if test="auditNote !=null and auditNote !='' ">
+            auditNote = #{auditNote},
+        </if>
+        <if test="creator !=null and creator !='' ">
+            creator = #{creator},
+        </if>
+        sheetId=#{sheetId}
+        where sheetId=#{sheetId}
+    </update>
+    
+    
+    <update id="updateO2oGoodsFilterSheetDetail" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoodsFilterSheetDetail">
+        update o2ogoodsfilter_sheet_detail set 
+        <if test="shopId !=null and shopId !='' ">
+            shopId = #{shopId},
+        </if>
+        <if test="itemCode !=null and itemCode !='' ">
+            itemCode = #{itemCode},
+        </if>
+        <if test="goodsName !=null and goodsName !='' ">
+            goodsName = #{goodsName},
+        </if>
+        <if test="statusMsg !=null">
+            statusMsg = #{statusMsg},
+        </if>
+        <if test="status !=null">
+            status = #{status},
+        </if>
+        sheetId=#{sheetId}
+        where sheetId=#{sheetId} and rowNo=#{rowNo}
+    </update>
+    
+    <delete id="deleteO2oGoodsFilterSheetDetail" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoodsFilterSheetDetail">
+        delete from o2ogoodsfilter_sheet_detail where sheetId=#{sheetId} and rowNo=#{rowNo}
+    </delete>
+    
+    
+    
+    <!-- 获取商品主档筛选列表 -->
+    <select id="getO2oGoodsFilterList" parameterType="Map" resultType="Map">
+        select DISTINCT concat(a.shopId,'-',b.ShopNameAlias) "shopId", a.itemCode, a.createTime, b.city, c.Name,
+        if(c.Name is null,0,1) isMatch, e.goodsName, a.sheetId, IFNULL(d.imageKey1,"") imageKey1
+        from o2ogoodsfilter a
+        left join shop b on a.shopId = b.shopId and b.city is not null
+        left join cs_product c on a.itemCode = c.itemCode
+        left join o2o_product d on a.itemCode = d.itemCode and b.retailformatId = d.retailformatId
+        left join o2ogoods e on a.itemCode = e.itemCode and a.shopId = e.shopId
+        <where>
+            <if test="city != null and city !='' ">
+                b.city like concat(#{city},'%')
+            </if>
+            <if test="shopId != null">
+                and a.shopId in
+                <foreach collection="shopId" open="(" close=")" separator="," item="shopId" index="index">
+                    #{shopId}
+                </foreach>
+            </if>
+            <if test="sheetId != null and sheetId !='' ">
+                and a.sheetId like concat(#{sheetId},'%')
+            </if>
+            <if test="itemCode != null and itemCode !='' ">
+                and a.itemCode like concat(#{itemCode},'%')
+            </if>
+            <if test="userName != null">
+                and a.shopId in (select shopId from o2o_user_shop where userName = #{userName})
+            </if>
+        </where>
+        <if test="page != null">
+            limit #{page},#{pageSize}
+        </if>
+    </select>
+
+    <!-- 新增商品主档筛选 -->
+    <insert id="insertO2oGoodsFilter" parameterType="Map">
+       REPLACE INTO o2ogoodsfilter (shopId, itemCode, goodsName, sheetId, status, createTime)
+       VALUES (#{shopId}, #{itemCode}, #{goodsName}, #{sheetId}, 0, now())
+    </insert>
+    
+    
+    <insert id="insertO2oGoodsFilters" parameterType="Map">
+        INSERT INTO o2ogoodsfilter (shopId, itemCode, goodsName, status, createTime)
+        select shopId, #{itemCode}, #{goodsName}, 0, now()
+        from shop
+        <where>
+            city is not null
+            <if test="shopId != null">
+                and shopId in
+                <foreach collection="shopId" open="(" close=")" separator="," item="shopId" index="index">
+                    #{shopId}
+                </foreach>
+            </if>
+            <if test="city !=null and city !='' ">
+                and city like concat(#{city},'%')
+            </if>
+        </where>
+    </insert>
+    
+        <!-- 获取商品主档筛选列表总数 -->
+    <select id="getO2oGoodsFilterListCount" parameterType="Map" resultType="long">
+        select count(1)
+        from o2ogoodsfilter a
+        left join shop b on a.shopId = b.shopId and b.city is not null
+        <if test="userName != null">
+            join o2o_user_shop d on d.shopId=a.shopId and d.userName = #{userName}
+        </if>
+        <where>
+            <if test="city != null and city !='' ">
+                b.city like concat(#{city},'%')
+            </if>
+            <if test="shopId != null">
+                and a.shopId in
+                <foreach collection="shopId" open="(" close=")" separator="," item="shopId" index="index">
+                    #{shopId}
+                </foreach>
+            </if>
+            <if test="itemCode != null and itemCode !='' ">
+                and a.itemCode like concat(#{itemCode},'%')
+            </if>
+        </where>
+    </select>
+    
+</mapper>

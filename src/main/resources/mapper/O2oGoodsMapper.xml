@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.O2oGoodsMapper">
+
+    <!--<cache type="cn.com.efuture.o2o.backend.config.RedisCacheConfig" /> -->
+    <!--获取门店商品列表总数-->
+    <select id="getO2oGoodsListCount" parameterType="Map" resultType="long">
+        select count(1) form FROM o2ogoods g
+        join shop s on g.shopId = s.shopId
+        <if test="userName != null">
+            join o2o_user_shop d on d.shopId=g.shopId and d.userName = #{userName}
+        </if>
+        <where>
+            <if test="city !=null">
+                s.city in
+                <foreach collection="city" index="index" item="city" open="(" separator="," close=")">
+                    #{city}
+                </foreach>
+            </if>
+            <if test="shopId !=null ">
+                and g.shopId in
+                <foreach collection="shopId" item="index" index="index" open="(" close=")" separator=",">
+                    #{index}
+                </foreach>
+            </if>
+            <if test="channelId !=null and channelId !='' ">
+                and g.channelId = #{channelId}
+            </if>
+            <if test="o2oSkuId !=null and o2oSkuId !='' ">
+                and g.o2oSkuId = #{o2oSkuId}
+            </if>
+            <if test="goodsName !=null and goodsName !='' ">
+                and g.goodsName like concat('%',#{goodsName},'%')
+            </if>
+            <if test="barcode !=null and barcode !='' ">
+                and g.barcode = #{barcode}
+            </if>
+            <if test="itemCode !=null and itemCode !='' ">
+                and g.itemCode like concat(#{itemCode},'%')
+            </if>
+            <if test="shelved !=null and shelved !='' ">
+                and g.shelved = #{shelved}
+            </if>
+            <if test="status !=null and status !='' ">
+                and g.status = #{status}
+            </if>
+            <if test="categoryId !=null and categoryId !='' ">
+                and g.categoryId = #{categoryId}
+            </if>
+            <if test="isSelf != null and isSelf !='' ">
+                and g.isSelf = #{isSelf}
+            </if>
+        </where>
+    </select>
+
+
+    <!--获取门店商品列表-->
+    <select id="getO2oGoodsList" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoods">
+        select
+        c.channelName,g.channelId,s.shopNameAlias,g.itemId,g.skuId,g.internalItemCode,g.internalItemSubcode,g.itemCode,g.o2oItemId,g.o2oSkuId,g.shopId,
+        g.o2oCategoryId,g.goodsName,g.goodsEnName,g.barcode,g.weight,ifnull(g.p4Inventory,0)
+        p4Inventory,g.lockInventory,g.lockInventoryRefresh,
+        ifnull(g.saleQty,0) saleQty,ifnull(g.actualInventory,0) actualInventory,ifnull(g.safeInventory,0)
+        safeInventory,g.sysInventory,g.marketPrice,ifnull(g.erpPrice,0) erpPrice,
+        g.priceRate,g.salesPrice,g.lockPrice,g.costPrice,g.isEvent,g.vatCode,g.shelved,g.status,g.createTime,g.statusModifyTime,g.shelvedModifyTime,priceModifyTime,
+        inventoryModifyTime,g.sysPrice,g.categoryId,g.unit,g.spec,o.categoryName,g.isSelf
+        from o2ogoods g
+        join shop s on g.shopId = s.shopId
+        join channel c on g.channelId = c.channelId
+        join o2ocategory o on g.categoryId = o.categoryId
+        <if test="userName != null">
+            join o2o_user_shop d on d.shopId=g.shopId and d.userName = #{userName}
+        </if>
+        <where>
+            <if test="city !=null ">
+                s.city in
+                <foreach collection="city" index="index" item="city" open="(" separator="," close=")">
+                    #{city}
+                </foreach>
+            </if>
+            <if test="shopId !=null ">
+                and g.shopId in
+                <foreach collection="shopId" item="index" index="index" open="(" close=")" separator=",">
+                    #{index}
+                </foreach>
+            </if>
+            <if test="channelId !=null and channelId !='' ">
+                and g.channelId = #{channelId}
+            </if>
+            <if test="o2oSkuId !=null and o2oSkuId !='' ">
+                and g.o2oSkuId = #{o2oSkuId}
+            </if>
+            <if test="goodsName !=null and goodsName !='' ">
+                and g.goodsName like concat('%',#{goodsName},'%')
+            </if>
+            <if test="barcode !=null and barcode !='' ">
+                and g.barcode = #{barcode}
+            </if>
+            <if test="itemCode !=null and itemCode !='' ">
+                and g.itemCode like concat(#{itemCode},'%')
+            </if>
+            <if test="shelved !=null and shelved !='' ">
+                and g.shelved = #{shelved}
+            </if>
+            <if test="status !=null and status !='' ">
+                and g.status = #{status}
+            </if>
+            <if test="categoryId !=null and categoryId !='' ">
+                and g.categoryId = #{categoryId}
+            </if>
+            <if test="isSelf != null and isSelf !='' ">
+                and g.isSelf = #{isSelf}
+            </if>
+        </where>
+        <if test="page != null">
+            limit #{page},#{pageSize}
+        </if>
+    </select>
+
+    <!-- 获取门店商品信息-->
+    <select id="getO2oGoods" resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoods" parameterType="Map">
+        select
+        g.itemId,g.skuId,g.internalItemCode,g.internalItemSubcode,g.itemCode,g.o2oItemId,g.o2oSkuId,g.channelId,g.shopId,g.o2oCategoryId,
+        g.goodsName,g.goodsEnName,g.barcode,g.weight,ifnull(g.p4Inventory,0)
+        p4Inventory,g.lockInventory,g.lockInventoryRefresh,ifnull(g.saleQty,0) saleQty,
+        g.actualInventory,ifnull(g.safeInventory,0) safeInventory,g.sysInventory,g.marketPrice,ifnull(g.erpPrice,0)
+        erpPrice,g.priceRate,g.salesPrice,
+        g.lockPrice,g.costPrice,g.isEvent,g.vatCode,g.shelved,g.status,g.createTime,g.statusModifyTime,g.shelvedModifyTime,
+        g.priceModifyTime,g.inventoryModifyTime,g.sysPrice,g.categoryId,g.unit,g.spec,o.categoryName,g.isSelf
+        from o2ogoods g
+        join o2ocategory o on g.categoryId = o.categoryId
+        <where>
+            <if test="itemId !=null and itemId !='' ">
+                g.itemId = #{itemId}
+            </if>
+            <if test="channelId !=null and channelId !='' ">
+                and g.channelId = #{channelId}
+            </if>
+            <if test="skuId !=null and skuId !='' ">
+                and g.skuId = #{skuId}
+            </if>
+            <if test="userName != null">
+                and exists (select 1 from o2o_user_shop d where d.shopid=g.shopid and d.userName = #{userName})
+            </if>
+        </where>
+    </select>
+
+    <!-- 修改门店商品信息 -->
+    <update id="updateO2oGoods" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoods">
+        update o2ogoods g set
+        <if test="safeInventory !=null">
+            safeInventory = #{safeInventory},
+        </if>
+        <if test="lockInventory !=null and lockInventory !=-1">
+            lockInventory = #{lockInventory},inventoryModifyTime=now(),
+        </if>
+        <if test="lockInventory !=null and lockInventory ==-1">
+            lockInventory = null,inventoryModifyTime=now(),
+        </if>
+        <if test="lockInventoryRefresh !=null">
+            lockInventoryRefresh = #{lockInventoryRefresh},
+        </if>
+        <if test="lockPrice !=null and lockPrice !=-1.0">
+            lockPrice = #{lockPrice},priceModifyTime=now(),
+        </if>
+        <if test="lockPrice !=null and lockPrice ==-1.0">
+            lockPrice = null,priceModifyTime=now(),
+        </if>
+        <if test="shelved !=null">
+            shelved = #{shelved},
+        </if>
+        <if test="status !=null">
+            status = #{status},
+        </if>
+        <if test="salesPrice !=null">
+            salesPrice = #{salesPrice},
+        </if>
+        <if test="isEvent !=null">
+            isEvent = #{isEvent},
+        </if>
+        <if test="goodsName !=null and goodsName !='' ">
+            goodsName = #{goodsName},
+        </if>
+        <if test="goodsEnName !=null ">
+            goodsEnName = #{goodsEnName},
+        </if>
+        <if test="categoryId !=null and categoryId !='' ">
+            categoryId = #{categoryId},
+        </if>
+        <if test="barcode !=null and barcode !='' ">
+            barcode = #{barcode},
+        </if>
+        <if test="unit !=null and unit !='' ">
+            unit = #{unit},
+        </if>
+        <if test="spec !=null and spec !='' ">
+            spec = #{spec},
+        </if>
+        <if test="weight !=null ">
+            weight = #{weight},
+        </if>
+        <if test="isSelf != null">
+            isSelf = #{isSelf},
+        </if>
+        <if test="priceRate != null ">
+            priceRate = #{priceRate},
+        </if>
+        lastModifyTime=now()
+        <where>
+            <if test="skuId !=null and skuId !='' ">
+                skuId = #{skuId} and channelId=#{channelId} and shopId=#{shopId}
+            </if>
+            <if test="itemId != null  and itemId !='' ">
+                and itemId = #{itemId}
+            </if>
+            <if test="isSelfZero != null">
+                and isSelf = #{isSelfZero}
+            </if>
+            <if test="userName!=null">
+                and exists (select 1 from o2o_user_shop d
+                <if test="retailFormatId != null">
+                    join o2o_user_retailformat e on d.userId=e.userId join shop s on s.retailFormatId=e.retailFormatId and s.shopId=d.shopId and e.retailFormatId=#{retailFormatId}
+                </if>
+                where d.shopid=g.shopid
+                and d.userName = #{userName})
+            </if>
+        </where>
+    </update>
+
+    <!-- 修改上下架、价格时，写入门店商品日志  -->
+    <insert id="insertO2oGoodsLog" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoodsLog">
+        insert into o2oGoodsLog
+        (operator,channelId,channelShopId,shopId,taskType,itemId,skuId,itemcode,o2oItemId,o2oSkuID,shelved,price,createTime,processCount,processStatus,isUpdateImage)
+        select
+        #{operator},a.channelId,b.channelShopId,a.shopId,#{taskType},a.itemId,skuId,itemCode,o2oItemId,o2oSkuId,a.shelved,ifnull(lockPrice,salesPrice),now(),0,0,#{isUpdateImage}
+        from o2ogoods a
+        join channelshop b on a.channelId = b.channelId and a.shopId = b.shopId
+        <if test="operator != null">
+            join o2o_user_shop d on d.shopId=a.shopId and d.userName = #{operator}
+            <if test="retailFormatId">
+                join o2o_user_retailformat f on f.userId=d.userId and f.retailformatId = #{retailFormatId}
+            </if>
+        </if>
+        <where>
+            1=1
+            <if test="skuId !=null and skuId !='' ">
+                and a.skuId = #{skuId} and a.channelId=#{channelId} and a.shopId=#{shopId}
+            </if>
+            <if test="itemId != null  and itemId !='' ">
+                and a.itemId = #{itemId}
+            </if>
+            <if test="isSelf != null">
+                and a.isSelf = #{isSelf}
+            </if>
+        </where>
+    </insert>
+
+    <!-- 设置锁定库存时，写入门店商品库存日志  -->
+    <insert id="insertO2oInventoryLog" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oInventoryLog">
+        insert into o2oInventoryLog
+        (operator,channelId,channelShopId,shopId,itemId,skuId,itemCode,o2oItemId,o2oSkuId,p4Stock,saleQty,actualStock,createTime,processStatus)
+        select
+        #{operator},a.channelId,c.channelShopId,a.shopId,a.itemId,skuId,itemCode,o2oItemId,o2oSkuId,p4Inventory,saleQty,#{actualStock},now(),0
+        from o2ogoods a
+        join channelshop c on a.channelId = c.channelId and a.shopId = c.shopId
+        <if test="operator != null">
+            join o2o_user_shop d on d.shopId=a.shopId and d.userName = #{operator}
+        </if>
+        <where>
+            a.o2oSkuId is not null
+            <if test="skuId !=null and skuId !='' ">
+                and a.skuId = #{skuId} and a.channelId=#{channelId} and a.shopId=#{shopId}
+            </if>
+            <if test="itemId != null  and itemId !='' ">
+                and a.itemId = #{itemId}
+            </if>
+        </where>
+    </insert>
+
+    <!-- 手工触发时，写入门店商品库存日志  -->
+    <insert id="insertInventoryLog" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oInventoryLog">
+        INSERT INTO o2oInventoryLog (operator, channelId, channelShopId, shopId, itemId, skuId, itemCode, o2oItemId,
+        o2oSkuId, p4Stock, saleQty, actualStock, createTime, processCount, processStatus)
+        SELECT
+        #{operator},
+        a.channelId,
+        c.channelShopId,
+        a.shopId,
+        a.itemId,
+        skuId,
+        itemCode,
+        o2oItemId,
+        o2oSkuId,
+        ifnull(a.p4Inventory, 0),
+        ifnull(a.saleQty, 0),
+        ifnull(a.lockInventory, 0),
+        now(),
+        0,
+        0
+        FROM o2ogoods a
+        JOIN channelshop c ON a.channelId = c.channelId AND a.shopId = c.shopId
+        <if test="operator != null">
+            join o2o_user_shop d on d.shopId=a.shopId and d.userName = #{operator}
+        </if>
+        WHERE a.lockInventory > 0 AND a.lockInventoryRefresh = 0 AND a.status = 1
+    </insert>
+
+    <!-- 根据主档商品来更新门店商品  -->
+    <update id="updateO2oGoodsByProduct" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oGoods">
+        UPDATE o2ogoods a
+            JOIN o2o_product b ON b.itemid = a.itemid
+        SET a.goodsname   = b.goodsname,
+            a.goodsEnName = b.goodsEnName,
+            a.barcode     = b.barcode,
+            a.weight      = b.weight,
+            a.categoryId  = b.categoryId,
+            a.unit        = b.unit,
+            a.spec        = b.spec
+        WHERE a.skuid = #{skuId} AND a.itemid = #{itemId} AND a.channelId = #{channelId}
+    </update>
+
+</mapper>
+
+
+

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.O2oCategoryMapper">
+
+    <!-- 获取类别列表清单-->
+    <select id="getCategoryList" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oCategory">
+        SELECT
+            a.categoryId,
+            a.categoryName,
+            a.parentCategoryId,
+            a.level,
+            a.seqNo,
+            a.flag,
+            a.lastModifyTime,
+            a.memo,
+            a.retailFormatId,
+            b.retailformatName
+        FROM o2ocategory a
+            join retailformat b on a.retailFormatId = b.retailFormatId
+        where a.retailFormatId in (select e.retailFormatId
+                                   from o2o_user_retailformat e
+                                       join user f on e.userId = f.userId
+                                   where f.userName = #{userName})
+        ORDER BY a.retailFormatId, a.categoryId
+    </select>
+
+    <select id="getCategory" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oCategory">
+        SELECT
+            a.categoryId,
+            a.categoryName,
+            a.parentCategoryId,
+            a.level,
+            a.seqNo,
+            a.flag,
+            a.lastModifyTime,
+            a.memo,
+            a.retailFormatId
+        FROM o2ocategory a
+        where a.categoryId = #{categoryId}
+    </select>
+
+    <select id="getDept" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.Dept">
+        select
+            deptId,
+            name,
+            nameEn,
+            alias,
+            parentId,
+            level,
+            hasChild,
+            b2cDeptId,
+            status,
+            isSysB2c,
+            b2cParentId,
+            isOverseas
+        from dept
+        where deptId = #{deptId}
+    </select>
+
+    <!-- 新增类别信息 -->
+    <insert id="insertCategory" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oCategory">
+        INSERT INTO o2ocategory (categoryId, categoryName, parentCategoryId, level, seqNo, flag, lastModifyTime, memo, retailFormatId)
+        VALUES (#{categoryId}, #{categoryName}, #{parentCategoryId}, #{level}, #{seqNo}, #{flag}, now(), #{memo},
+                #{retailFormatId})
+    </insert>
+
+    <!-- 修改类别信息 -->
+    <update id="updateCategory" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oCategory">
+        update o2ocategory set
+        <if test="categoryName !=null and categoryName !='' ">
+            categoryName = #{categoryName},
+        </if>
+        <if test="parentCategoryId !=null">
+            parentCategoryId = #{parentCategoryId},
+        </if>
+        <if test="level !=null">
+            level = #{level},
+        </if>
+        <if test="seqNo !=null">
+            seqNo = #{seqNo},
+        </if>
+        <if test="flag !=null">
+            flag = #{flag},
+        </if>
+        <if test="memo !=null">
+            memo = #{memo},
+        </if>
+        lastModifyTime = now()
+        where categoryId=#{categoryId}
+    </update>
+
+    <!-- 新增各渠道类别信息 -->
+    <insert id="insertChannelCategory" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelCategory">
+        INSERT INTO channelcategory
+        (categoryId,channelId,channelShopId,o2oCategoryId,parentO2OCategoryId,isSys,creaeteTime)
+        SELECT a.categoryId,b.channelId,b.channelShopId,'','',0,now()
+        FROM o2ocategory a
+        JOIN channelshop b ON 1 = 1
+        join shop c on c.shopid=b.shopid and c.retailformatId=a.retailformatId
+        where 1=1
+        <if test="categoryId !=null and categoryId !='' ">
+            and a.categoryId = #{categoryId}
+        </if>
+        <if test="channelId !=null and channelId !='' and channelShopId != null and channelShopId != '' ">
+            and b.channelId = #{channelId}
+            and b.channelShopId=#{channelShopId}
+            and a.categoryId !=0
+        </if>
+    </insert>
+
+    <!-- 写入渠道类别操作日志表 -->
+    <insert id="insertChannelCategoryLog" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.ChannelCategoryLog">
+        INSERT INTO channelcategorylog (operator, channelId, shopId, channelShopId, taskType, categoryId, categoryName,
+        createTime, processCount, processStatus)
+        SELECT #{operator},b.channelId,c.shopId,b.channelShopId,#{taskType},a.categoryId, a.categoryName,now(),0,0
+        FROM o2ocategory a
+        JOIN channelcategory b ON b.categoryId = a.categoryId
+        JOIN channelshop c ON b.channelId=c.channelId and b.channelShopId=c.channelShopId
+        where 1=1
+        <if test="categoryId !=null and categoryId !='' ">
+            and a.categoryId = #{categoryId}
+        </if>
+        <if test="channelId !=null and channelId !='' and channelShopId != null and channelShopId != '' ">
+            and b.channelId = #{channelId}
+            and b.channelShopId=#{channelShopId}
+            and a.categoryId !=0
+        </if>
+    </insert>
+
+    <!-- 获取子类别id总数用于生成新类别id -->
+    <select id="getCategoryIdCount" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oCategory"
+            resultType="int">
+        SELECT count(*)
+        FROM o2ocategory
+        where parentCategoryId = #{parentCategoryId}
+    </select>
+
+    <!-- 获取子类别排序id的最大值用于生成新增排序id -->
+    <select id="getSeqNoMax" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oCategory" resultType="Integer">
+        select max(seqNo)
+        from o2ocategory
+        where parentCategoryId = #{parentCategoryId}
+    </select>
+
+    <!-- 获取类别树和类别下门店商品数量-->
+    <select id="getChannelCategoryList" parameterType="Map" resultType="Map">
+        SELECT a.categoryId ,a.categoryName ,a.parentCategoryId ,a.level ,a.seqNo ,a.flag
+        ,a.memo,a.retailFormatId,ifnull(b.total,0) total
+        FROM o2ocategory a
+        left join (select categoryId,count(*) as total from o2ogoods b join shop c on b.shopId = c.ShopId
+        where 1=1
+        <if test="itemCode !=null and itemCode !='' ">
+            and b.itemCode like concat(#{itemCode},'%')
+        </if>
+        <if test="o2oItemId !=null and o2oItemId !='' ">
+            and b.o2oItemId like concat(#{o2oItemId},'%')
+        </if>
+        <if test="goodsName !=null and goodsName !='' ">
+            and b.goodsName like concat(#{goodsName},'%')
+        </if>
+        <if test="barcode !=null and barcode !='' ">
+            and b.barcode like concat(#{barcode},'%')
+        </if>
+        <if test="shelved !=null and shelved !='' ">
+            and b.shelved = #{shelved}
+        </if>
+        <if test="status !=null and status !='' ">
+            and b.status = #{status}
+        </if>
+        <if test="isSelf !=null and isSelf !='' ">
+            and b.isSelf = #{isSelf}
+        </if>
+        <if test="channelId !=null and channelId !='' ">
+            and b.channelId = #{channelId}
+        </if>
+        <if test="city !=null ">
+            and c.city in
+            <foreach collection="city" index="index" item="city" open="(" separator="," close=")">
+                #{city}
+            </foreach>
+        </if>
+        <if test="shopId != null">
+            and b.shopId in
+            <foreach collection="shopId" open="(" close=")" separator="," item="shopId" index="index">
+                #{shopId}
+            </foreach>
+        </if>
+        group by categoryId) b on a.categoryId = b.categoryId
+        where a.retailFormatId in (select e.retailFormatId from o2o_user_retailformat e
+        join user f on e.userId = f.userId
+        where f.userName = #{userName})
+        ORDER BY a.retailFormatId,a.categoryId
+    </select>
+
+    <!-- 获取类别树和类别下主档商品数量-->
+    <select id="getCategoryListProduct" parameterType="Map" resultType="Map">
+        SELECT a.categoryId ,a.categoryName ,a.parentCategoryId ,a.level ,a.seqNo ,a.flag
+        ,a.memo,a.retailFormatId,ifnull(b.total,0) total
+        FROM o2ocategory a
+        left join (select categoryId,retailFormatId,count(*) as total from o2o_product b
+        where 1=1
+        <if test="itemCode !=null and itemCode !='' ">
+            and b.itemCode like concat(#{itemCode},'%')
+        </if>
+        <if test="status !=null and status !='' ">
+            and b.status = #{status}
+        </if>
+        <if test="goodsName !=null and goodsName !='' ">
+            and b.goodsName like concat(#{goodsName},'%')
+        </if>
+        <if test="barcode !=null and barcode !='' ">
+            and b.barcode like concat(#{barcode},'%')
+        </if>
+        group by categoryId) b on a.categoryId = b.categoryId and a.retailFormatId=b.retailFormatId
+        where a.retailFormatId in (select e.retailFormatId from o2o_user_retailformat e
+        join user f on e.userId = f.userId
+        where f.userName = #{userName})
+        ORDER BY a.retailFormatId,a.categoryId
+    </select>
+</mapper>

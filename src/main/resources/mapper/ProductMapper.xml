@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.ProductMapper">
+
+    <!--<cache type="cn.com.efuture.o2o.backend.config.RedisCacheConfig" />-->
+
+    <!-- 获取商品主档列表清单总数 -->
+    <select id="getProductListCount" parameterType="Map" resultType="long">
+        select count(1)
+        from o2o_product a
+        <where>
+            <if test="userName != null">
+                a.retailformatId in(
+                select b.retailformatId from o2o_user_retailformat b join user c on b.userId=c.userId where c.userName=#{userName})
+            </if>
+            <if test="retailFormatId != null">
+                and a.retailformatId=#{retailFormatId}
+            </if>
+            <if test="itemCode != null and itemCode !='' ">
+               and a.itemCode LIKE concat(#{itemCode},'%')
+            </if>
+            <if test="barcode != null and barcode !='' ">
+                and a.barcode = #{barcode}
+            </if>
+            <if test="categoryId != null  and categoryId !='' ">
+                and a.categoryId = #{categoryId}
+            </if>
+            <if test="goodsName != null  and goodsName !='' ">
+                and a.goodsName like concat('%',#{goodsName},'%')
+            </if>
+            <if test="status !=null">
+                and a.status = #{status}
+            </if>
+
+        </where>
+    </select>
+
+    <!-- 获取商品主档列表清单 -->
+    <select id="getProductList" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oProduct">
+        select c.retailFormatName,a.retailFormatId,a.itemId, a.internalItemCode, a.itemCode, a.status, a.goodsName, a.goodsEnName,
+        a.categoryId,a.erpCategoryId, a.barcode, a.unit, a.spec,
+        a.pkSpec, a.weight, a.height, a.width, a.length, a.itemType, a.sqeNo, a.imageKey1, a.imageKey2, a.memo,
+        a.createTime,b.categoryName
+        from o2o_product a
+        join o2ocategory b on a.categoryId=b.categoryId
+        join retailformat c on a.retailformatId=c.retailformatId
+        <where>
+            <if test="userName != null">
+                a.retailformatId in(
+                select b.retailformatId from o2o_user_retailformat b join user c on b.userId=c.userId where c.userName=#{userName})
+            </if>
+            <if test="retailFormatId != null">
+                and a.retailformatId=#{retailFormatId}
+            </if>
+            <if test="itemCode != null and itemCode !='' ">
+                and a.itemCode LIKE concat(#{itemCode},'%')
+            </if>
+            <if test="barcode != null and barcode !='' ">
+                and a.barcode = #{barcode}
+            </if>
+            <if test="categoryId != null  and categoryId !='' ">
+                and a.categoryId = #{categoryId}
+            </if>
+            <if test="goodsName != null  and goodsName !='' ">
+                and a.goodsName like concat('%',#{goodsName},'%')
+            </if>
+            <if test="status !=null">
+                and a.status = #{status}
+            </if>
+        </where>
+        <if test="page != null">
+            limit #{page},#{pageSize}
+        </if>
+    </select>
+
+    <!-- 获取商品主档信息-->
+    <select id="getProduct" parameterType="Map" resultType="cn.com.efuture.o2o.backend.mybatis.entity.O2oProduct">
+        select c.retailFormatName,a.retailFormatId,itemId, internalItemCode, itemCode, status, goodsName, goodsEnName, categoryId,erpCategoryId, barcode,
+        unit, spec, pkSpec, weight, height, width,
+        length, itemType, sqeNo, imageKey1, imageKey2, memo, createTime
+        from o2o_product a
+        join retailformat c on a.retailformatId=c.retailformatId
+        <where>
+            <if test="itemId != null and itemId !='' ">
+                itemId = #{itemId}
+            </if>
+            <if test="retailFormatId != null">
+                and a.retailFormatId=#{retailFormatId}
+            </if>
+            <if test="itemCode != null and itemCode !='' ">
+                and itemCode like concat(#{itemCode},'%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 修改商品主档信息 -->
+    <update id="updateProduct" parameterType="cn.com.efuture.o2o.backend.mybatis.entity.O2oProduct">
+        update o2o_product set
+        <if test="status !=null">
+            status = #{status},
+        </if>
+        <if test="goodsName != null and goodsName !='' ">
+            goodsName=#{goodsName},
+        </if>
+        <if test="goodsEnName != null and goodsEnName !='' ">
+            goodsEnName=#{goodsEnName},
+        </if>
+        <if test="categoryId != null and categoryId !='' ">
+            categoryId=#{categoryId},
+        </if>
+        <if test="barcode != null and barcode !='' ">
+            barcode=#{barcode},
+        </if>
+        <if test="unit != null and unit !='' ">
+            unit=#{unit},
+        </if>
+        <if test="spec != null and spec !='' ">
+            spec=#{spec},
+        </if>
+        <if test="pkSpec != null and pkSpec !='' ">
+            pkSpec=#{pkSpec},
+        </if>
+        <if test="weight != null ">
+            weight=#{weight},
+        </if>
+        <if test="height != null ">
+            height=#{height},
+        </if>
+        <if test="width != null ">
+            width=#{width},
+        </if>
+        <if test="length != null ">
+            length=#{length},
+        </if>
+        <if test="itemType != null ">
+            itemType=#{itemType},
+        </if>
+        <if test="sqeNo != null ">
+            sqeNo=#{sqeNo},
+        </if>
+        <if test="imageKey1 != null ">
+            imageKey1=#{imageKey1},
+        </if>
+        <if test="imageKey2 != null ">
+            imageKey2=#{imageKey2},
+        </if>
+        <if test="memo != null ">
+            memo=#{memo},
+        </if>
+        lastModifyTime=now()
+        where itemId=#{itemId} and retailFormatId=#{retailFormatId}
+    </update>
+
+
+</mapper>
+
+
+

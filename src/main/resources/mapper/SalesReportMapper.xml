@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.SalesReportMapper">
+
+    <select id="getSalesReport" parameterType="Map" resultType="Map">
+        SELECT
+        d.city,
+        b.channelName,
+        CASE c. STATUS
+        WHEN 100 THEN
+        '签收'
+        WHEN 99 THEN
+        '取消'
+        WHEN 98 THEN
+        '关闭'
+        WHEN 2 THEN
+        '待验货'
+        ELSE
+        '已验货'
+        END AS 'logisticsState',
+        CASE ifnull(
+        (
+        SELECT
+        max(STATUS)
+        FROM
+        o2oorderlog
+        WHERE
+        purchaseno = a.channelorderId
+        AND channelId = a.channelId
+        AND type = 1
+        ),
+        a. STATUS
+        )
+        WHEN 100 THEN
+        '签收'
+        WHEN 99 THEN
+        '取消'
+        WHEN 98 THEN
+        '关闭'
+        ELSE
+        '在途'
+        END "orderStatus",
+        CASE e.status
+        WHEN 1 THEN
+        '已发'
+        WHEN 100 THEN
+        '记账完成'
+        ELSE
+        '待发'
+        END "silverStatus",
+        a.createTime,
+        e.acctime,
+        a.channelOrderId,
+        concat(
+        a.channelShopId,
+        '-',
+        d.shopName
+        ) "channelShopId",
+        a.totalSaleValue,
+        (
+        SELECT
+        sum(salevalue)
+        FROM
+        orderdetail
+        WHERE
+        orderId = a.orderId
+        ) "salevalue",
+        a.logisticsSfee,
+        abs(a.totalDiscValue) "totalDiscValue",
+        a.expressReceivables ,
+        a.pickupReceivables ,
+        a.freightDiscount ,
+        a.point ,
+        a.transportCost ,
+        a.payValue ,
+        a.originalOrderId ,
+        a.recordTime ,
+        (
+        SELECT
+        min(RecordTime)
+        FROM
+        tasklog b
+        WHERE
+        b.taskId = c.taskId
+        AND WorkContent = '订单任务验货完成-商品'
+        ) "inspectionTime"
+        FROM
+        orderlist a
+        JOIN channel b ON b.channelId = a.channelId
+        LEFT JOIN task c ON a.orderId = c.orderId
+        JOIN shop d ON a.channelShopId = d.shopId
+        left join o2otpliunx e on e.channelId=a.ChannelId and e.purchaseNo=a.channelOrderId
+        <if test="userName != null">
+            join o2o_user_shop o on o.shopId=a.channelShopId and o.userName = #{userName}
+        </if>
+        <where>
+            a.channelId in (10,11,12)
+            <if test="startDate_createTime !=null and startDate_createTime !='' and endDate_createTime !=null and endDate_createTime !='' ">
+                and a.createTime between #{startDate_createTime} and DATE_ADD(#{endDate_createTime},INTERVAL 1 DAY)
+            </if>
+            <if test="startDate_recordTime !=null and startDate_recordTime !='' and endDate_recordTime !=null and endDate_recordTime !='' ">
+                and a.recordTime between #{startDate_recordTime} and DATE_ADD(#{endDate_recordTime},INTERVAL 1 DAY)
+            </if>
+            <if test="startDate_acctime !=null and startDate_acctime !='' and endDate_acctime !=null and endDate_inspectionTime !='' ">
+                and e.acctime between #{startDate_acctime} and DATE_ADD(#{endDate_acctime},INTERVAL 1 DAY)
+            </if>
+            <if test="city !=null and city !='' ">
+                and d.city = #{city}
+            </if>
+            <if test="channelOrderId !=null and channelOrderId !='' ">
+                and a.channelOrderId like concat(#{channelOrderId},'%')
+            </if>
+            <if test="shopId != null">
+                and d.shopId in
+                <foreach collection="shopId" open="(" close=")" separator="," item="shopId" index="index">
+                    #{shopId}
+                </foreach>
+            </if>
+        </where>
+        <if test="page != null">
+            limit #{page},#{pageSize}
+        </if>
+    </select>
+
+
+    <select id="getSalesReportCount" parameterType="Map" resultType="long">
+        SELECT count(1)
+        from
+        orderlist a
+        JOIN shop d ON a.channelShopId = d.shopId
+        left join o2otpliunx e on e.channelId=a.ChannelId and e.purchaseNo=a.channelOrderId
+        <if test="userName != null">
+            join o2o_user_shop o on o.shopId=a.channelShopId and o.userName = #{userName}
+        </if>
+        <where>
+            a.channelId in (10,11,12)
+            <if test="startDate_createTime !=null and startDate_createTime !='' and endDate_createTime !=null and endDate_createTime !='' ">
+                and a.createTime between #{startDate_createTime} and DATE_ADD(#{endDate_createTime},INTERVAL 1 DAY)
+            </if>
+            <if test="startDate_recordTime !=null and startDate_recordTime !='' and endDate_recordTime !=null and endDate_recordTime !='' ">
+                and a.recordTime between #{startDate_recordTime} and DATE_ADD(#{endDate_recordTime},INTERVAL 1 DAY)
+            </if>
+            <if test="startDate_acctime !=null and startDate_acctime !='' and endDate_acctime !=null and endDate_inspectionTime !='' ">
+                and e.acctime between #{startDate_acctime} and DATE_ADD(#{endDate_acctime},INTERVAL 1 DAY)
+            </if>
+            <if test="city !=null and city !='' ">
+                and d.city = #{city}
+            </if>
+            <if test="channelOrderId !=null and channelOrderId !='' ">
+                and a.channelOrderId like concat(#{channelOrderId},'%')
+            </if>
+            <if test="shopId != null">
+                and d.shopId in
+                <foreach collection="shopId" open="(" close=")" separator="," item="shopId" index="index">
+                    #{shopId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

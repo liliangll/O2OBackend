@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.efuture.o2o.backend.mybatis.mapper.ChannelMapper">
+
+    <!--<cache type="cn.com.efuture.o2o.backend.config.RedisCacheConfig" />-->
+
+    <!-- 获取 channel 列表清单-->
+    <select id="getChannelList" resultType="cn.com.efuture.o2o.backend.mybatis.entity.Channel">
+       select channelId,channelName from channel where channelId >=10
+    </select>
+
+    <select id="getChannel" resultType="cn.com.efuture.o2o.backend.mybatis.entity.Channel">
+        select channelId,channelName from channel
+        <where>
+            channelId >=10
+            <if test="channelId != null">
+                and channelId = #{channelId}
+            </if>
+        </where>
+    </select>
+</mapper>
+
+
+
